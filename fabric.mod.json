@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "totemcounter",
+  "version": "${version}",
+  "name": "Totem Counter",
+  "description": "Shows totem count of other players",
+  "authors": [
+    "Author"
+  ],
+  "contact": {},
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.example.totemcounter.TotemCounterMod"
+    ],
+    "client": [
+      "com.example.totemcounter.client.TotemCounterClient"
+    ]
+  },
+  "mixins": [
+    "totemcounter.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.4",
+    "fabric-api": "*"
+  }
+}
