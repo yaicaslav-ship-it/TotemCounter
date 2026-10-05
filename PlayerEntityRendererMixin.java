@@ -8,12 +8,12 @@ import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(PlayerEntityRenderer.class)
 public abstract class PlayerEntityRendererMixin extends LivingEntityRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> {
@@ -22,20 +22,22 @@ public abstract class PlayerEntityRendererMixin extends LivingEntityRenderer<Abs
         super(ctx, model, shadowRadius);
     }
 
-    @Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/network/AbstractClientPlayerEntity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IF)V",
-            at = @At("RETURN"))
-    private void renderTotemCount(AbstractClientPlayerEntity entity, Text text, MatrixStack matrices,
-                                 VertexConsumerProvider vertexConsumers, int light, float tickDelta, CallbackInfo ci) {
+    @ModifyVariable(
+        method = "renderLabelIfPresent(Lnet/minecraft/client/network/AbstractClientPlayerEntity;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;IF)V",
+        at = @At("HEAD"),
+        argsOnly = true,
+        ordinal = 0
+    )
+    private Text appendTotemsToName(Text originalText, AbstractClientPlayerEntity entity, Text text, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float tickDelta) {
         Integer totems = TotemCounterClient.TOTEM_COUNTS.get(entity.getId());
-        if (totems == null) return;
-
-        matrices.push();
-        matrices.translate(0.0F, 0.3F, 0.0F);
+        if (totems == null) {
+            return originalText;
+        }
 
         Formatting color = totems > 0 ? Formatting.GOLD : Formatting.GRAY;
-        Text label = Text.literal("✦ Тотемы: " + totems).formatted(color);
+        MutableText totemSuffix = Text.literal(" [✦ " + totems + "]").formatted(color);
 
-        this.renderLabelIfPresent(entity, label, matrices, vertexConsumers, light, tickDelta);
-        matrices.pop();
+        // Склеиваем стандартный ник игрока и суффикс с тотемами в одну строку
+        return originalText.copy().append(totemSuffix);
     }
 }
